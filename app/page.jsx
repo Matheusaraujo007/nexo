@@ -3,12 +3,14 @@ import { useState } from "react";
 
 export default function Home() {
   const [status, setStatus] = useState("Clique para ativar o Nexo");
+  let recognition;
 
   const speak = msg => {
     const u = new SpeechSynthesisUtterance(msg);
     u.lang = "pt-BR";
     u.rate = 0.8;
     u.pitch = 0.85;
+    speechSynthesis.cancel();
     speechSynthesis.speak(u);
   };
 
@@ -16,20 +18,21 @@ export default function Home() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SR) {
-      alert("Seu navegador não suporta reconhecimento de voz.");
+      alert("Reconhecimento de voz não suportado neste navegador.");
       return;
     }
 
-    const rec = new SR();
-    rec.lang = "pt-BR";
-    rec.continuous = true;
+    recognition = new SR();
+    recognition.lang = "pt-BR";
+    recognition.continuous = true;
+    recognition.interimResults = false;
 
-    rec.onstart = () => {
+    recognition.onstart = () => {
       setStatus("🎙️ Nexo ouvindo...");
       speak("Nexo ativo. Estou ouvindo.");
     };
 
-    rec.onresult = e => {
+    recognition.onresult = e => {
       const texto =
         e.results[e.results.length - 1][0].transcript.toLowerCase();
 
@@ -37,16 +40,21 @@ export default function Home() {
 
       if (texto.includes("ok nexo")) {
         speak("Estou aqui. Pode falar.");
-        setStatus("Nexo respondeu.");
+        setStatus("Comando reconhecido.");
       }
     };
 
-    rec.onerror = e => {
-      console.error(e);
-      setStatus("Erro ao ouvir.");
+    recognition.onerror = e => {
+      console.warn("Erro de voz:", e.error);
+      setStatus("Reconhecimento pausado. Clique para reativar.");
+      recognition.stop();
     };
 
-    rec.start();
+    recognition.onend = () => {
+      setStatus("Nexo em espera.");
+    };
+
+    recognition.start();
   };
 
   return (

@@ -6,6 +6,15 @@ export async function GET() {
 
 export async function POST(req) {
   const { text } = await req.json();
-  tasks.push({ id: Date.now(), text });
+
+  if (!text) {
+    return Response.json({ error: "Texto vazio" }, { status: 400 });
+  }
+
+  tasks.push({
+    id: Date.now(),
+    text
+  });
+
   return Response.json({ ok: true });
 }
